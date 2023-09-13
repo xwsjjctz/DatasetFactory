@@ -1,0 +1,13 @@
+models/*
+venv/*
+venv/
+dataset_raw/*
+dataset/*
+data/*
+wav/*
+__pycache__/*
+
+*.wav
+*.flv
+*.mp4
+*.pth
