@@ -121,6 +121,7 @@ def inference_main(input):
     cropsize = 256
  
     X, sr = librosa.load(input, mono=False, dtype=np.float32, res_type='kaiser_fast')
+    # X, sr = librosa.core.audio.__audioread_load(input, mono=False, dtype=np.float32, res_type='kaiser_fast')
     basename = os.path.splitext(os.path.basename(input))[0]
 
     X_spec = spec_utils.wave_to_spectrogram(X, hop_length, n_fft)
