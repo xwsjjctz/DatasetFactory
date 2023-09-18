@@ -1,9 +1,6 @@
-models/*
 venv/*
-venv/
-dataset_raw/*
-dataset/*
 data/*
+vocal_separation_by_uvr5/*
 wav/*
 __pycache__/*
 
@@ -11,3 +8,6 @@ __pycache__/*
 *.flv
 *.mp4
 *.pth
+*.pt
+*.m4a
+*.zip

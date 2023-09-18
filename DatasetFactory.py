@@ -11,7 +11,7 @@ import librosa
 import soundfile
 from slicer2 import Slicer
 from common import slash, file_path
-from resample import wav_resample_multithreaded
+import resample
 from inference import inference_main
 import subprocess
 
@@ -45,21 +45,6 @@ def get_access_token():
     params = {"grant_type": "client_credentials", "client_id": API_KEY, "client_secret": SECRET_KEY}
     return str(requests.post(url, params=params).json().get("access_token"))
 
-# 从媒体文件中抽取音频并转换成wav格式的音频文件
-def video2wav():
-    print("extracting audios...")
-    dataset = file_path(DATASETPATH)
-    for i in trange(len(dataset)):
-        input_path = os.path.join('.', DATASETPATH, dataset[i])
-        output_path = os.path.join('.', WAVPATH, dataset[i])
-        if os.path.splitext(input_path)[1] == ".wav":
-            os.rename(input_path, output_path)
-        else:
-            os.system(f'''ffmpeg -i "{input_path}" -vn -sn -c:a copy -y -map 0:a:0 "{output_path}.aac" -v quiet''')
-            os.system(f'''ffmpeg "{output_path}.wav" -i "{output_path}.aac" -v quiet''')
-            os.remove(f"{output_path}.aac")
-    print("success")
-
 # 给长度过长的音频切片
 def cutwav():
     print("cutting...")
@@ -77,6 +62,21 @@ def cutwav():
         os.remove(file)
     print("success")
 
+# 从媒体文件中抽取音频并转换成wav格式的音频文件
+def video2wav():
+    print("extracting audios...")
+    dataset = file_path(DATASETPATH)
+    for i in trange(len(dataset)):
+        input_path = os.path.join('.', DATASETPATH, dataset[i])
+        output_path = os.path.join('.', WAVPATH, dataset[i])
+        if os.path.splitext(input_path)[1] == ".wav":
+            os.rename(input_path, output_path)
+        else:
+            os.system(f'''ffmpeg -i "{input_path}" -vn -sn -c:a copy -y -map 0:a:0 "{output_path}.aac" -v quiet''')
+            os.system(f'''ffmpeg "{output_path}.wav" -i "{output_path}.aac" -v quiet''')
+            os.remove(f"{output_path}.aac")
+    print("success")
+
 # 提取音频文件中的人声
 def noise2vocal():
     print("extracting vocals...")
@@ -85,7 +85,7 @@ def noise2vocal():
         for i in range(len(wav)):
             input_path = os.path.join('.', WAVPATH, wav[i])
             inference_main(input_path)
-            # os.remove(input_path)
+            os.remove(input_path)
             pbar_total.update(1)
     print("success")
 
@@ -174,15 +174,15 @@ def baidu_speech2text(WAVTEMPPATH):
     print("success")
 
 if __name__ == '__main__':
-    # res = 16000
-    # num_threads = multiprocessing.cpu_count()
+    res = 16000
+    num_threads = multiprocessing.cpu_count()
     try:
-        # cutwav()
-        # video2wav()
-        noise2vocal()
+        cutwav()
+        video2wav()
+        # noise2vocal()
         # wav2chunks()
         # whisper_speech2text()
-        # wav_resample_multithreaded(WAVPATH, WAVTEMPPATH, res=res, num_threads=num_threads/2)
+        # resample.wav_resample_multithreaded(WAVPATH, WAVTEMPPATH, res=res, num_threads=num_threads/2)
         # baidu_speech2text()
     except KeyboardInterrupt:
         print("stop execution")
