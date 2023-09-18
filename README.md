@@ -14,3 +14,6 @@ pip install -r requirements.txt
 python DatasetFactory.py
 ```
 运行。
+
+引用：
+https://github.com/dddqmmx/uvr5-cli
