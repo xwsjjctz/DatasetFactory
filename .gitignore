@@ -1,9 +1,3 @@
-venv/*
-data/*
-vocal_separation_by_uvr5/*
-wav/*
-__pycache__/*
-
 *.wav
 *.flv
 *.mp4
