@@ -6,30 +6,21 @@ import urllib
 import requests
 import json
 import multiprocessing
+import concurrent.futures
 from tqdm import trange, tqdm
 import librosa
 import soundfile
-from slicer2 import Slicer
-from common import slash, file_path
-import resample
-from inference import inference_main
 import subprocess
+import time
 
-# 说话人名称
-SPEAKER = "azi"
-# 语言
-LANGUAGE = "[ZH]"
-# 百度云服务相关信息
-API_KEY = "NrV6ZYeG213XytOqkR21c6DB"
-SECRET_KEY = "fzOmKHGEQC4lQGXn7jEOxBipGvvv2GgX"
-CUID = "32857573"
+from core import dataset, cutwav
+from slicer2 import Slicer
+from common import slash, file_path, WHISPERMODEL, FILELIST_FILE, DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER
+from inference import inference_main
+import resample
 
-WHISPERMODEL = os.path.join('.', 'models', 'large-v2.pt')           # whisper模型路径
-FILELIST_FILE = os.path.join('.', 'filelist', 'temp.txt')           # 数据集输出文件
-DATASETPATH = "dataset_raw"                                         # 输入文件夹
-WAVPATH = "wav"                                                     # 输出文件夹
-WAVTEMPPATH = "wav_temp"                                            # 输出文件夹中wav转换后的临时文件夹地址
-FILELIST = []                                                       # speech2text函数输出缓存
+res = 16000
+num_threads = multiprocessing.cpu_count()
 
 # 音频转base64
 def get_file_content_as_base64(path, urlencoded=False):
@@ -46,21 +37,11 @@ def get_access_token():
     return str(requests.post(url, params=params).json().get("access_token"))
 
 # 给长度过长的音频切片
-def cutwav():
-    print("cutting...")
-    dataset = file_path(DATASETPATH)
-    for i in trange(len(dataset)):
-        file = os.path.join('.', DATASETPATH, dataset[i])
-        file_format = os.path.splitext(file)[1]
-        command = f'''ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}" -v quiet'''
-        duration = subprocess.run(command, shell=True, stdout=subprocess.PIPE, text=True)
-        duration = int(float(duration.stdout.strip()))
-        # print(duration, type(duration))
-        if duration >= 1800:
-            for i in range(0, duration, 1800):
-                os.system(f'''ffmpeg -i "{file}" -ss {i} -t 1800 -c copy "{file}_{int(i/1800)}{file_format}" -v quiet''')
-        os.remove(file)
-    print("success")
+def cut2wav():
+    with concurrent.futures.ThreadPoolExecutor(num_threads) as executor: 
+        for i in dataset:
+            # print(i)
+            executor.submit(cutwav, i)
 
 # 从媒体文件中抽取音频并转换成wav格式的音频文件
 def video2wav():
@@ -174,16 +155,14 @@ def baidu_speech2text(WAVTEMPPATH):
     print("success")
 
 if __name__ == '__main__':
-    res = 16000
-    num_threads = multiprocessing.cpu_count()
     try:
-        cutwav()
+        cut2wav()
         video2wav()
-        # noise2vocal()
-        # wav2chunks()
-        # whisper_speech2text()
-        # resample.wav_resample_multithreaded(WAVPATH, WAVTEMPPATH, res=res, num_threads=num_threads/2)
-        # baidu_speech2text()
+        noise2vocal()
+        wav2chunks()
+        whisper_speech2text()
+        resample.wav_resample_multithreaded(WAVPATH, WAVTEMPPATH, res=res, num_threads=num_threads/2)
+        baidu_speech2text()
     except KeyboardInterrupt:
         print("stop execution")
         quit()
