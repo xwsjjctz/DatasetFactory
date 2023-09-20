@@ -5,3 +5,5 @@
 *.pt
 *.m4a
 *.zip
+
+__pycache__/*

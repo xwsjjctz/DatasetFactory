@@ -1,3 +1,4 @@
+from distutils import filelist
 import os
 import whisper
 import opencc
@@ -5,22 +6,19 @@ import base64
 import urllib
 import requests
 import json
-import multiprocessing
 import concurrent.futures
 from tqdm import trange, tqdm
 import librosa
 import soundfile
-import subprocess
-import time
 
-from core import dataset, cutwav
+from cutwav import dataset, num_threads, cutwav_core
 from slicer2 import Slicer
-from common import slash, file_path, WHISPERMODEL, FILELIST_FILE, DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER
+from common import slash, file_path, WHISPERMODEL, FILELIST_FILE, \
+    DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER
 from inference import inference_main
 import resample
 
 res = 16000
-num_threads = multiprocessing.cpu_count()
 
 # 音频转base64
 def get_file_content_as_base64(path, urlencoded=False):
@@ -37,19 +35,19 @@ def get_access_token():
     return str(requests.post(url, params=params).json().get("access_token"))
 
 # 给长度过长的音频切片
-def cut2wav():
+def cutwav():
     with concurrent.futures.ThreadPoolExecutor(num_threads) as executor: 
         for i in dataset:
             # print(i)
-            executor.submit(cutwav, i)
+            executor.submit(cutwav_core, i)
 
 # 从媒体文件中抽取音频并转换成wav格式的音频文件
-def video2wav():
+def data2wav():
     print("extracting audios...")
-    dataset = file_path(DATASETPATH)
-    for i in trange(len(dataset)):
-        input_path = os.path.join('.', DATASETPATH, dataset[i])
-        output_path = os.path.join('.', WAVPATH, dataset[i])
+    filelist = file_path(DATASETPATH)
+    for file in filelist:
+        input_path = os.path.join('.', DATASETPATH, file)
+        output_path = os.path.join('.', WAVPATH, file)
         if os.path.splitext(input_path)[1] == ".wav":
             os.rename(input_path, output_path)
         else:
@@ -61,10 +59,10 @@ def video2wav():
 # 提取音频文件中的人声
 def noise2vocal():
     print("extracting vocals...")
-    wav = file_path(WAVPATH)
-    with tqdm(total=len(wav), desc='Total Progress') as pbar_total:
-        for i in range(len(wav)):
-            input_path = os.path.join('.', WAVPATH, wav[i])
+    filelist = file_path(WAVPATH)
+    with tqdm(total=filelist, desc='Total Progress') as pbar_total:
+        for file in filelist:
+            input_path = os.path.join('.', WAVPATH, file)
             inference_main(input_path)
             os.remove(input_path)
             pbar_total.update(1)
@@ -97,24 +95,24 @@ def wav2chunks():
 # 识别人声并对应文件目录写入文本（利用whisper本地部署）
 def whisper_speech2text():
     print("extracting texts...")
-    wav = file_path(WAVPATH)
+    filelist = file_path(WAVPATH)
     model = whisper.load_model(WHISPERMODEL)
-    for i in trange(len(wav)):
-        result = model.transcribe(f"{WAVPATH}{slash}{wav[i]}", language = "Chinese", fp16 = True)
+    for file in filelist:
+        result = model.transcribe(f"{WAVPATH}{slash}{file}", language = "Chinese", fp16 = True)
         transcript = result["text"]
         converter = opencc.OpenCC('t2s')
         transcript = converter.convert(transcript)
         if len(transcript) < 3:
-            os.remove(f"{WAVPATH}{slash}{wav[i]}")
+            os.remove(f"{WAVPATH}{slash}{file}")
         else:
-            FILELIST.append(f".{slash}dataset{slash}{SPEAKER}{slash}{wav[i]}|{SPEAKER}|{LANGUAGE}|{transcript}{LANGUAGE}\n")
+            FILELIST.append(f".{slash}dataset{slash}{SPEAKER}{slash}{file}|{SPEAKER}|{LANGUAGE}|{transcript}{LANGUAGE}\n")
     read_File = open(FILELIST_FILE,'w',encoding='utf-8')
     read_File.writelines(FILELIST)
     read_File.close()
     print("success")
 
 # 识别人声并对应文件目录写入文本（调用百度语音识别的api）
-def baidu_speech2text(WAVTEMPPATH):
+def baidu_speech2text():
     print("extracting texts...")
     wav_temp = file_path(WAVTEMPPATH)
     wav = file_path(WAVPATH)
@@ -140,13 +138,13 @@ def baidu_speech2text(WAVTEMPPATH):
             response = json.loads(response.text)
             response = response["result"][0]
             if len(response) < 3:
-                os.remove(f"{input}{slash}{wav_temp[i]}")
+                os.remove(f"{WAVTEMPPATH}{slash}{wav_temp[i]}")
                 os.remove(f"{WAVPATH}{slash}{wav[i]}")
             else:
                 FILELIST.append(f".{slash}dataset{slash}{SPEAKER}{slash}{wav[i]}|{SPEAKER}|{LANGUAGE}|{response}{LANGUAGE}\n")
-                os.remove(f"{input}{slash}{wav_temp[i]}")
+                os.remove(f"{WAVTEMPPATH}{slash}{wav_temp[i]}")
         except KeyError:
-            os.remove(f"{input}{slash}{wav_temp[i]}")
+            os.remove(f"{WAVTEMPPATH}{slash}{wav_temp[i]}")
             os.remove(f"{WAVPATH}{slash}{wav[i]}")
             continue
     read_File = open(FILELIST_FILE,'w',encoding='utf-8')
@@ -155,16 +153,10 @@ def baidu_speech2text(WAVTEMPPATH):
     print("success")
 
 if __name__ == '__main__':
-    try:
-        cut2wav()
-        video2wav()
-        noise2vocal()
-        wav2chunks()
-        whisper_speech2text()
-        resample.wav_resample_multithreaded(WAVPATH, WAVTEMPPATH, res=res, num_threads=num_threads/2)
-        baidu_speech2text()
-    except KeyboardInterrupt:
-        print("stop execution")
-        quit()
-    finally:
-        print("Program has finished")
+    # cutwav()
+    data2wav()
+    # noise2vocal()
+    # wav2chunks()
+    # whisper_speech2text()
+    # resample.wav_resample_multithreaded(16000)
+    # baidu_speech2text()
