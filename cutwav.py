@@ -3,7 +3,7 @@ import multiprocessing
 import concurrent.futures
 import time
 from common import file_path, DATASETPATH
-from tqdm import trange
+from tqdm import tqdm
 import os
 import subprocess
 import random
@@ -25,7 +25,7 @@ filelist = random_split(filelist)
 # print(dataset)
 
 def cutwav_core(input):
-    for file in input:
+    for file in tqdm(input):
         file_format = os.path.splitext(file)[1]
         filepath = os.path.join('.', DATASETPATH, file)
         command = f'''ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{filepath}" -v quiet'''
