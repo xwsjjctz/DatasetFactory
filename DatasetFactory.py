@@ -1,4 +1,3 @@
-from distutils import filelist
 import os
 import whisper
 import opencc
@@ -6,15 +5,14 @@ import base64
 import urllib
 import requests
 import json
-import concurrent.futures
 from tqdm import tqdm
 import librosa
 import soundfile
 
-from cutwav import filelist, num_threads, cutwav_core
+import core
 from slicer2 import Slicer
-from common import slash, file_path, WHISPERMODEL, FILELIST_FILE, \
-    DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER
+from common import pbar, file_path, WHISPERMODEL, FILELIST_FILE, \
+    DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER, slash
 from inference import inference_main
 import resample
 
@@ -34,31 +32,21 @@ def get_access_token():
 
 # 给长度过长的音频切片
 def cutwav():
-    with concurrent.futures.ThreadPoolExecutor(num_threads) as executor: 
-        for file in filelist:
-            # print(file)
-            executor.submit(cutwav_core, file)
+    print("cutting...")
+    core.working_threads(path=DATASETPATH, func=core.cutwav_core)
+    print("success")
 
 # 从媒体文件中抽取音频并转换成wav格式的音频文件
 def data2wav():
     print("extracting audios...")
-    filelist = file_path(DATASETPATH)
-    for file in tqdm(filelist):
-        input_path = os.path.join('.', DATASETPATH, file)
-        output_path = os.path.join('.', WAVPATH, file)
-        if os.path.splitext(input_path)[1] == ".wav":
-            os.rename(input_path, output_path)
-        else:
-            os.system(f'''ffmpeg -i "{input_path}" -vn -sn -c:a copy -y -map 0:a:0 "{output_path}.aac" -v quiet''')
-            os.system(f'''ffmpeg "{output_path}.wav" -i "{output_path}.aac" -v quiet''')
-            os.remove(f"{output_path}.aac")
+    core.working_threads(path=DATASETPATH, func=core.data2wav_core)
     print("success")
 
 # 提取音频文件中的人声
 def noise2vocal():
     print("extracting vocals...")
     filelist = file_path(WAVPATH)
-    for file in tqdm(filelist):
+    for file in pbar(filelist):
         input_path = os.path.join('.', WAVPATH, file)
         inference_main(input_path)
         os.remove(input_path)
@@ -68,7 +56,7 @@ def noise2vocal():
 def wav2chunks():
     print("extracting chunks...")
     filelist = file_path(WAVPATH)
-    for file in tqdm(filelist):
+    for file in pbar(filelist):
         input_path = os.path.join('.', WAVPATH, file)
         audio, sr = librosa.load(input_path, sr=None, mono=False)
         slicer = Slicer(
@@ -79,9 +67,7 @@ def wav2chunks():
             hop_size=10,
             max_sil_kept=500
         )
-
         index_file = filelist.index(file)
-
         chunks = slicer.slice(audio)
         for j, chunk in enumerate(chunks):
             if len(chunk.shape) > 1:
@@ -96,7 +82,7 @@ def whisper_speech2text():
     print("extracting texts...")
     filelist = file_path(WAVPATH)
     model = whisper.load_model(WHISPERMODEL)
-    for file in tqdm(filelist):
+    for file in pbar(filelist):
         result = model.transcribe(f"{WAVPATH}{slash}{file}", language = "Chinese", fp16 = True)
         transcript = result["text"]
         converter = opencc.OpenCC('t2s')
@@ -120,7 +106,7 @@ def baidu_speech2text():
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-    for wav_temp in tqdm(wav_temp_list):
+    for wav_temp in pbar(wav_temp_list):
         index_wav_temp = wav_temp_list.index(wav_temp)
         wav = wav_list[index_wav_temp]
         try:
@@ -154,7 +140,7 @@ def baidu_speech2text():
     print("success")
 
 if __name__ == '__main__':
-    # cutwav()
+    cutwav()
     data2wav()
     # noise2vocal()
     # wav2chunks()
