@@ -7,6 +7,9 @@ from tqdm import  tqdm
 from lib_v5 import spec_utils
 from utils import _get_name_params,inference
 from lib_v5.model_param_init import ModelParameters
+import soundfile as sf
+from warnings import simplefilter
+simplefilter(action="ignore",category=FutureWarning)
 
 
 class  _audio_pre_():
@@ -53,7 +56,7 @@ class  _audio_pre_():
         music_file  path
         save_path save_path
         '''
-        os.makedirs(save_path , exist_ok=1)
+        # os.makedirs(save_path , exist_ok=1)
         X_wave, y_wave, X_spec_s, y_spec_s = {}, {}, {}, {}
         bands_n = len(self.mp.param['band'])
         for d in range(bands_n, 0, -1): 
@@ -107,10 +110,10 @@ class  _audio_pre_():
             wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
         print ('wav_vocals is ok')                     
         # in_path = os.path.join(save_path , 'wav_instrument_{}.wav'.format(os.path.basename(music_file)) )
-        vo_path = os.path.join(save_path , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
+        vo_path = os.path.join(f"{save_path}_uvr5" , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
         
         # librosa.output.write_wav( in_path,np.array(wav_instrument[:,0]),self.mp.param['sr'] )
-        librosa.output.write_wav( vo_path,np.array(wav_vocals[:,0]),self.mp.param['sr'] )
+        sf.write(vo_path,np.array(wav_vocals[:,0]),self.mp.param['sr'])
         print ('{} is ok '.format(music_file) )
 
         # return wav_instrument , wav_vocals
@@ -120,29 +123,8 @@ if __name__ == '__main__':
     device = 'cuda'
     pre_fun = _audio_pre_(
         device=device,
-        model_path = './3_HP-Vocal-UVR.pth',
+        model_path = './models/3_HP-Vocal-UVR.pth',
                         )
     audio_path = './dengziqi/句号.m4a'
     save_path = './dengziqi/pre_datas'
     in_data , vo_data = pre_fun._path_audio_(audio_path , save_path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

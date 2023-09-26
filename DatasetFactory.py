@@ -11,10 +11,10 @@ import soundfile
 
 import core
 from slicer2 import Slicer
-from common import pbar, file_path, WHISPERMODEL, FILELIST_FILE, \
-    DATASETPATH, WAVPATH, WAVTEMPPATH, FILELIST, CUID, SECRET_KEY, API_KEY, LANGUAGE, SPEAKER, slash
+from common import *
 from inference import inference_main
 import resample
+from inference_uvr5 import _audio_pre_
 
 # 音频转base64
 def get_file_content_as_base64(path, urlencoded=False):
@@ -46,9 +46,19 @@ def data2wav(input):
 def noise2vocal():
     print("extracting vocals...")
     filelist = file_path(WAVPATH)
-    for file in pbar(filelist):
+    for file in filelist:
         input_path = os.path.join('.', WAVPATH, file)
-        inference_main(input_path)
+
+        # inference_main(input_path)
+
+        device = 'cuda'
+        pre_fun = _audio_pre_(
+            device=device,
+            model_path = UVR5MODEL,
+                            )
+        audio_path = input_path
+        save_path = input_path
+        in_data , vo_data = pre_fun._path_audio_(audio_path , save_path)
         os.remove(input_path)
     print("success")
 
@@ -140,10 +150,10 @@ def baidu_speech2text():
     print("success")
 
 if __name__ == '__main__':
-    cutwav(DATASETPATH)
-    data2wav(DATASETPATH)
+    # cutwav(DATASETPATH)
+    # data2wav(DATASETPATH)
     noise2vocal()
-    wav2chunks()
-    # whisper_speech2text()
-    resample.wav_resample_multithreaded(16000)
-    baidu_speech2text()
+    # wav2chunks()
+    # # whisper_speech2text()
+    # resample.wav_resample_multithreaded(16000)
+    # baidu_speech2text()
