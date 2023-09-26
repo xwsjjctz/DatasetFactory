@@ -1,10 +1,11 @@
 import multiprocessing
 import concurrent.futures
-from common import file_path, pbar, DATASETPATH, WAVPATH
 import os
 import subprocess
 import random
 import math
+
+from common import file_path, pbar, DATASETPATH, WAVPATH
 
 cpu_threads = multiprocessing.cpu_count()
 
@@ -22,7 +23,7 @@ def random_split(input, lst):
 def filelist(input):
     return random_split(input, file_path(input))
 
-# print(dataset)
+# print(filelist)
 
 def cutwav_core(input):
     for file in pbar(input):
@@ -50,5 +51,5 @@ def data2wav_core(input):
 def working_threads(path, func):
     with concurrent.futures.ThreadPoolExecutor(num_threads(path)) as executor: 
         for file in filelist(path):
-            # print(i)
+            # print(file)
             executor.submit(func, file)

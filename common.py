@@ -24,7 +24,7 @@ def file_path(filepath):
     for path in os.walk(filepath):
         path = natsorted(path[2], alg=ns.PATH)
         return path
-    
+
 # 进度条
 def pbar(input):
     return tqdm(input)

@@ -31,15 +31,15 @@ def get_access_token():
     return str(requests.post(url, params=params).json().get("access_token"))
 
 # 给长度过长的音频切片
-def cutwav():
+def cutwav(input):
     print("cutting...")
-    core.working_threads(path=DATASETPATH, func=core.cutwav_core)
+    core.working_threads(path=input, func=core.cutwav_core)
     print("success")
 
 # 从媒体文件中抽取音频并转换成wav格式的音频文件
-def data2wav():
+def data2wav(input):
     print("extracting audios...")
-    core.working_threads(path=DATASETPATH, func=core.data2wav_core)
+    core.working_threads(path=input, func=core.data2wav_core)
     print("success")
 
 # 提取音频文件中的人声
@@ -140,10 +140,10 @@ def baidu_speech2text():
     print("success")
 
 if __name__ == '__main__':
-    cutwav()
-    data2wav()
-    # noise2vocal()
-    # wav2chunks()
+    cutwav(DATASETPATH)
+    data2wav(DATASETPATH)
+    noise2vocal()
+    wav2chunks()
     # whisper_speech2text()
-    # resample.wav_resample_multithreaded(16000)
-    # baidu_speech2text()
+    resample.wav_resample_multithreaded(16000)
+    baidu_speech2text()
