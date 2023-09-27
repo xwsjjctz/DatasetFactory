@@ -5,7 +5,7 @@ import subprocess
 import random
 import math
 
-from common import file_path, pbar, DATASETPATH, WAVPATH
+from common import file_path, pbar, DATASETPATH, WAVPATH, slice_length
 
 cpu_threads = multiprocessing.cpu_count()
 
@@ -32,9 +32,9 @@ def cutwav_core(input):
         command = f'''ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{filepath}" -v quiet'''
         duration = subprocess.run(command, shell=True, stdout=subprocess.PIPE, text=True)
         duration = int(float(duration.stdout.strip()))
-        if duration >= 1800:
-            for i in range(0, duration, 1800):
-                os.system(f'''ffmpeg -i "{filepath}" -ss {i} -t 1800 -c copy "{filepath}_{int(i/1800)}{file_format}" -v quiet''')
+        if duration >= slice_length:
+            for i in range(0, duration, slice_length):
+                os.system(f'''ffmpeg -i "{filepath}" -ss {i} -t {slice_length} -c copy "{filepath}_{int(i/slice_length)}{file_format}" -v quiet''')
             os.remove(filepath)
 
 def data2wav_core(input):

@@ -1,6 +1,6 @@
 import os
-import whisper
-import opencc
+# import whisper
+# import opencc
 import base64
 import urllib
 import requests
@@ -57,8 +57,8 @@ def noise2vocal():
             model_path = UVR5MODEL,
                             )
         audio_path = input_path
-        save_path = input_path
-        in_data , vo_data = pre_fun._path_audio_(audio_path , save_path)
+        save_path = f"{input_path}_vocals"
+        in_data = pre_fun._path_audio_(audio_path , save_path)
         os.remove(input_path)
     print("success")
 
@@ -83,28 +83,28 @@ def wav2chunks():
             if len(chunk.shape) > 1:
                 chunk = chunk.T
             if len(chunk)/sr > 3 and len(chunk)/sr < 13:
-                soundfile.write(f"{input}{slash}{index_file+1}_{j+1}.wav", chunk, sr)
-        os.remove(input_path)
+                soundfile.write(f"{WAVPATH}{slash}{index_file+1}_{j+1}.wav", chunk, sr)
+        # os.remove(input_path)
     print("success")
 
 # 识别人声并对应文件目录写入文本（利用whisper本地部署）
-def whisper_speech2text():
-    print("extracting texts...")
-    filelist = file_path(WAVPATH)
-    model = whisper.load_model(WHISPERMODEL)
-    for file in pbar(filelist):
-        result = model.transcribe(f"{WAVPATH}{slash}{file}", language = "Chinese", fp16 = True)
-        transcript = result["text"]
-        converter = opencc.OpenCC('t2s')
-        transcript = converter.convert(transcript)
-        if len(transcript) < 3:
-            os.remove(f"{WAVPATH}{slash}{file}")
-        else:
-            FILELIST.append(f".{slash}dataset{slash}{SPEAKER}{slash}{file}|{SPEAKER}|{LANGUAGE}|{transcript}{LANGUAGE}\n")
-    read_File = open(FILELIST_FILE,'w',encoding='utf-8')
-    read_File.writelines(FILELIST)
-    read_File.close()
-    print("success")
+# def whisper_speech2text():
+#     print("extracting texts...")
+#     filelist = file_path(WAVPATH)
+#     model = whisper.load_model(WHISPERMODEL)
+#     for file in pbar(filelist):
+#         result = model.transcribe(f"{WAVPATH}{slash}{file}", language = "Chinese", fp16 = True)
+#         transcript = result["text"]
+#         converter = opencc.OpenCC('t2s')
+#         transcript = converter.convert(transcript)
+#         if len(transcript) < 3:
+#             os.remove(f"{WAVPATH}{slash}{file}")
+#         else:
+#             FILELIST.append(f".{slash}dataset{slash}{SPEAKER}{slash}{file}|{SPEAKER}|{LANGUAGE}|{transcript}{LANGUAGE}\n")
+#     read_File = open(FILELIST_FILE,'w',encoding='utf-8')
+#     read_File.writelines(FILELIST)
+#     read_File.close()
+#     print("success")
 
 # 识别人声并对应文件目录写入文本（调用百度语音识别的api）
 def baidu_speech2text():
@@ -150,10 +150,10 @@ def baidu_speech2text():
     print("success")
 
 if __name__ == '__main__':
-    cutwav(DATASETPATH)
-    data2wav(DATASETPATH)
+    # cutwav(DATASETPATH)
+    # data2wav(DATASETPATH)
     noise2vocal()
-    wav2chunks()
+    # wav2chunks()
     # # whisper_speech2text()
     # resample.wav_resample_multithreaded(16000)
-    baidu_speech2text()
+    # baidu_speech2text()

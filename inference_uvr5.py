@@ -4,6 +4,7 @@ import importlib
 import  numpy as np
 import hashlib , math
 from tqdm import  tqdm
+from lib.dataset import VocalRemoverTrainingSet
 from lib_v5 import spec_utils
 from utils import _get_name_params,inference
 from lib_v5.model_param_init import ModelParameters
@@ -38,9 +39,9 @@ class  _audio_pre_():
         nn_architecture = '{}KB'.format(min(nn_arch_sizes, key=lambda x:abs(x-model_size)))
         nets = importlib.import_module('lib_v5.nets' + f'_{nn_architecture}'.replace('_{}KB'.format(nn_arch_sizes[0]), ''), package=None)
         model_hash = hashlib.md5(open(model_path,'rb').read()).hexdigest()
-        print(model_hash)
+        # print(model_hash)
         ########   gggg 
-        param_name ,model_params_d = _get_name_params(model_path , model_hash)
+        param_name, model_params_d = _get_name_params(model_path , model_hash)
         mp = ModelParameters(model_params_d)
         model = nets.CascadedASPPNet(mp.param['bins'] * 2)
         cpk = torch.load( model_path , map_location='cpu')  
@@ -93,13 +94,13 @@ class  _audio_pre_():
         y_spec_m = pred * X_phase
         v_spec_m = X_spec_m - y_spec_m
 
-        # if self.data['high_end_process'].startswith('mirroring'):        
-        #     input_high_end_ = spec_utils.mirroring(self.data['high_end_process'], 
-        #                                                                                         y_spec_m, input_high_end, self.mp)
-        #     wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp,
-        #                                                                                          input_high_end_h, input_high_end_)    
-        # else:
-        #     wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
+        if self.data['high_end_process'].startswith('mirroring'):        
+            input_high_end_ = spec_utils.mirroring(self.data['high_end_process'], 
+                                                                                                y_spec_m, input_high_end, self.mp)
+            wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp,
+                                                                                                 input_high_end_h, input_high_end_)    
+        else:
+            wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
         # print ('wav_instrument is ok')                     
         if self.data['high_end_process'].startswith('mirroring'):        
             input_high_end_ = spec_utils.mirroring(self.data['high_end_process'], 
@@ -108,23 +109,25 @@ class  _audio_pre_():
                                                                                                  input_high_end_h, input_high_end_)    
         else:        
             wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
-        print ('wav_vocals is ok')                     
+        # print ('wav_vocals is ok')
         # in_path = os.path.join(save_path , 'wav_instrument_{}.wav'.format(os.path.basename(music_file)) )
-        vo_path = os.path.join(save_path , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
+        # vo_path = os.path.join(save_path , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
+        vo_path = os.path.join(f"{save_path}_Vocal.wav")
+        # in_path = os.path.join(f"{save_path}_instrument.wav")
         
         # librosa.output.write_wav( in_path,np.array(wav_instrument[:,0]),self.mp.param['sr'] )
-        sf.write(vo_path,np.array(wav_vocals[:,0]),self.mp.param['sr'])
-        print ('{} is ok '.format(music_file) )
+        sf.write(vo_path,np.array(wav_instrument[:,0]),self.mp.param['sr'])
+        # sf.write(in_path,np.array(wav_vocals[:,0]),self.mp.param['sr'])
+        # print ('{} is ok '.format(music_file))
+        return wav_instrument, wav_vocals
+        # return wav_instrument
 
-        # return wav_instrument , wav_vocals
-        return wav_vocals
-
-if __name__ == '__main__':
-    device = 'cuda'
-    pre_fun = _audio_pre_(
-        device=device,
-        model_path = './models/3_HP-Vocal-UVR.pth',
-                        )
-    audio_path = './dengziqi/句号.m4a'
-    save_path = './dengziqi/pre_datas'
-    in_data , vo_data = pre_fun._path_audio_(audio_path , save_path)
+# if __name__ == '__main__':
+#     device = 'cuda'
+#     pre_fun = _audio_pre_(
+#         device=device,
+#         model_path = './models/3_HP-Vocal-UVR.pth',
+#                         )
+#     audio_path = './dengziqi/句号.m4a'
+#     save_path = './dengziqi/pre_datas'
+#     in_data , vo_data = pre_fun._path_audio_(audio_path , save_path)

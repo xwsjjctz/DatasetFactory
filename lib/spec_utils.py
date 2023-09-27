@@ -181,47 +181,47 @@ def spectrogram_to_wave(spec, hop_length=1024):
     return wave
 
 
-if __name__ == "__main__":
-    import cv2
-    import sys
+# if __name__ == "__main__":
+#     import cv2
+#     import sys
 
-    bins = 2048 // 2 + 1
-    freq_to_bin = 2 * bins / 44100
-    unstable_bins = int(200 * freq_to_bin)
-    stable_bins = int(22050 * freq_to_bin)
-    reduction_weight = np.concatenate([
-        np.linspace(0, 1, unstable_bins, dtype=np.float32)[:, None],
-        np.linspace(1, 0, stable_bins - unstable_bins, dtype=np.float32)[:, None],
-        np.zeros((bins - stable_bins, 1))
-    ], axis=0) * 0.2
+#     bins = 2048 // 2 + 1
+#     freq_to_bin = 2 * bins / 44100
+#     unstable_bins = int(200 * freq_to_bin)
+#     stable_bins = int(22050 * freq_to_bin)
+#     reduction_weight = np.concatenate([
+#         np.linspace(0, 1, unstable_bins, dtype=np.float32)[:, None],
+#         np.linspace(1, 0, stable_bins - unstable_bins, dtype=np.float32)[:, None],
+#         np.zeros((bins - stable_bins, 1))
+#     ], axis=0) * 0.2
 
-    X, _ = librosa.load(
-        sys.argv[1], sr=44100, mono=False, dtype=np.float32, res_type='kaiser_fast')
-    y, _ = librosa.load(
-        sys.argv[2], sr=44100, mono=False, dtype=np.float32, res_type='kaiser_fast')
+#     X, _ = librosa.load(
+#         sys.argv[1], sr=44100, mono=False, dtype=np.float32, res_type='kaiser_fast')
+#     y, _ = librosa.load(
+#         sys.argv[2], sr=44100, mono=False, dtype=np.float32, res_type='kaiser_fast')
 
-    X, y = align_wave_head_and_tail(X, y, 44100)
-    X_spec = wave_to_spectrogram(X, 1024, 2048)
-    y_spec = wave_to_spectrogram(y, 1024, 2048)
+#     X, y = align_wave_head_and_tail(X, y, 44100)
+#     X_spec = wave_to_spectrogram(X, 1024, 2048)
+#     y_spec = wave_to_spectrogram(y, 1024, 2048)
 
-    X_mag = np.abs(X_spec)
-    y_mag = np.abs(y_spec)
-    # v_mag = np.abs(X_mag - y_mag)
-    v_mag = X_mag - y_mag
-    v_mag *= v_mag > y_mag
+#     X_mag = np.abs(X_spec)
+#     y_mag = np.abs(y_spec)
+#     # v_mag = np.abs(X_mag - y_mag)
+#     v_mag = X_mag - y_mag
+#     v_mag *= v_mag > y_mag
 
-    # y_mag = np.clip(y_mag - v_mag * reduction_weight, 0, np.inf)
-    y_spec = y_mag * np.exp(1j * np.angle(y_spec))
-    v_spec = v_mag * np.exp(1j * np.angle(X_spec))
+#     # y_mag = np.clip(y_mag - v_mag * reduction_weight, 0, np.inf)
+#     y_spec = y_mag * np.exp(1j * np.angle(y_spec))
+#     v_spec = v_mag * np.exp(1j * np.angle(X_spec))
 
-    X_image = spectrogram_to_image(X_mag)
-    y_image = spectrogram_to_image(y_mag)
-    v_image = spectrogram_to_image(v_mag)
+#     X_image = spectrogram_to_image(X_mag)
+#     y_image = spectrogram_to_image(y_mag)
+#     v_image = spectrogram_to_image(v_mag)
 
-    cv2.imwrite('test_X.jpg', X_image)
-    cv2.imwrite('test_y.jpg', y_image)
-    cv2.imwrite('test_v.jpg', v_image)
+#     cv2.imwrite('test_X.jpg', X_image)
+#     cv2.imwrite('test_y.jpg', y_image)
+#     cv2.imwrite('test_v.jpg', v_image)
 
-    sf.write('test_X.wav', spectrogram_to_wave(X_spec).T, 44100)
-    sf.write('test_y.wav', spectrogram_to_wave(y_spec).T, 44100)
-    sf.write('test_v.wav', spectrogram_to_wave(v_spec).T, 44100)
+#     sf.write('test_X.wav', spectrogram_to_wave(X_spec).T, 44100)
+#     sf.write('test_y.wav', spectrogram_to_wave(y_spec).T, 44100)
+#     sf.write('test_v.wav', spectrogram_to_wave(v_spec).T, 44100)

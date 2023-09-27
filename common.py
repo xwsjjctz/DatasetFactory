@@ -19,6 +19,7 @@ SECRET_KEY = "fzOmKHGEQC4lQGXn7jEOxBipGvvv2GgX"
 CUID = "32857573"
 FILELIST = []                                                       # speech2text函数输出缓存
 UVR5MODEL = "./models/3_HP-Vocal-UVR.pth"
+slice_length = 300
 
 # 返回目录所有文件的列表
 def file_path(filepath):
