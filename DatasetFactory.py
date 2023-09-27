@@ -150,10 +150,10 @@ def baidu_speech2text():
     print("success")
 
 if __name__ == '__main__':
-    # cutwav(DATASETPATH)
-    # data2wav(DATASETPATH)
+    cutwav(DATASETPATH)
+    data2wav(DATASETPATH)
     noise2vocal()
-    # wav2chunks()
+    wav2chunks()
     # # whisper_speech2text()
     # resample.wav_resample_multithreaded(16000)
-    # baidu_speech2text()
+    baidu_speech2text()

@@ -110,7 +110,7 @@ class  _audio_pre_():
             wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
         print ('wav_vocals is ok')                     
         # in_path = os.path.join(save_path , 'wav_instrument_{}.wav'.format(os.path.basename(music_file)) )
-        vo_path = os.path.join(f"{save_path}_uvr5" , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
+        vo_path = os.path.join(save_path , 'wav_vocal_{}.wav'.format(os.path.basename(music_file)) )
         
         # librosa.output.write_wav( in_path,np.array(wav_instrument[:,0]),self.mp.param['sr'] )
         sf.write(vo_path,np.array(wav_vocals[:,0]),self.mp.param['sr'])
