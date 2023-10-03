@@ -15,6 +15,10 @@ conda env create -f conda_env.yml
 
 DatasetFactory.py文件中有注释掉的whisper语音识别，速度慢，中文识别正确率较低。默认使用百度云的语音识别，需要去申请对应API。
 
+提取人声部分使用uvr5，在models/文件夹下放入uvr5的权重文件即可。
+
+所有个人修改的参数可以在common.py文件中找到。
+
 将音视频文件放入dataset_raw/文件夹中。
 使用以下命令运行。
 ```
