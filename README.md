@@ -9,9 +9,9 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 ```
 或者
 ```
-conda create env -f conda_env.yaml
+conda env create -f conda_env.yml
 ```
-推荐使用anaconda，或者对照conda_env.yaml文件中的依赖进行安装。
+推荐使用anaconda，或者对照conda_env.yml文件中的依赖进行安装。
 
 DatasetFactory.py文件中有注释掉的whisper语音识别，速度慢，中文识别正确率较低。默认使用百度云的语音识别，需要去申请对应API。
 
